@@ -7,7 +7,7 @@ from pyrogram.enums import ParseMode
 from pyrogram.types import Message
 from pytgcalls import PyTgCalls, idle
 from pytgcalls.types import Update
-from pytgcalls.types.input_stream import AudioPiped, AudioStream
+from pytgcalls.types.input_stream import AudioPiped
 from pytgcalls.exceptions import NoActiveGroupCall
 
 # Replace these with your actual API details
