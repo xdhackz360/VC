@@ -26,7 +26,7 @@ async def on_stream_end(_, update: Update):
     chat_id = update.chat_id
     await pytgcalls.leave_group_call(chat_id)
     # Remove the audio file after the voice chat ends
-    if os.path.exists(update.audio_file_path):
+    if hasattr(update, "audio_file_path") and os.path.exists(update.audio_file_path):
         os.remove(update.audio_file_path)
 
 @app.on_message(filters.command("joinvc") & filters.group)
