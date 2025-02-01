@@ -2,7 +2,7 @@ import asyncio
 import os
 from pyrogram import Client, filters
 from pyrogram.enums import ParseMode
-from pyrogram.types import Message, VoiceChatStarted
+from pyrogram.types import Message
 from pytgcalls import PyTgCalls, idle
 from pytgcalls.types import Update
 from pytgcalls.types.input_stream import InputStream, InputAudioStream
@@ -28,9 +28,7 @@ async def on_stream_end(_, update: Update):
 @app.on_message(filters.command("joinvc") & filters.group)
 async def join_vc(client: Client, message: Message):
     chat_id = message.chat.id
-    # Join the voice chat
     await user_client.join_chat(chat_id)
-    await user_client.send(VoiceChatStarted(chat_id=chat_id))
     await message.reply_text("Joined the voice chat", parse_mode=ParseMode.MARKDOWN)
 
 @app.on_message(filters.command("play") & filters.group)
