@@ -1,14 +1,14 @@
 import asyncio
 import os
+import subprocess
+import logging
 from pyrogram import Client, filters
 from pyrogram.enums import ParseMode
 from pyrogram.types import Message
 from pytgcalls import PyTgCalls, idle
 from pytgcalls.types import Update
-from pytgcalls.types.input_stream import InputStream, InputAudioStream
+from pytgcalls.types.input_stream import AudioPiped, AudioStream
 from pytgcalls.exceptions import NoActiveGroupCall
-import subprocess
-import logging
 
 # Replace these with your actual API details
 API_ID = 24602058  # Replace with your API ID
@@ -59,26 +59,28 @@ async def play_song(client: Client, message: Message):
     file_path = await message.reply_to_message.download()
     logger.info(f"Downloaded audio file for chat {chat_id}: {file_path}")
 
+    # Create a named pipe
+    pipe_path = f'/tmp/{chat_id}.pipe'
+    if not os.path.exists(pipe_path):
+        os.mkfifo(pipe_path)
+
     # Use FFmpeg to stream the audio file without modifying it
     ffmpeg_command = [
         'ffmpeg',
-        '-y',  # Overwrite output files without asking
-        '-re',  # Read input at native frame rate
         '-i', file_path,  # Input file
         '-f', 's16le',  # Output format
         '-ac', '2',  # Number of audio channels
         '-ar', '48000',  # Audio sample rate
-        '-'  # Output to stdout
+        pipe_path  # Output to named pipe
     ]
 
+    process = subprocess.Popen(ffmpeg_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
     try:
-        process = subprocess.Popen(ffmpeg_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         await pytgcalls.join_group_call(
             chat_id,
-            InputStream(
-                InputAudioStream(
-                    process.stdout,
-                )
+            AudioPiped(
+                pipe_path,
             )
         )
         await message.reply_text(f"Playing **{audio.file_name}** in the voice chat", parse_mode=ParseMode.MARKDOWN)
@@ -92,10 +94,8 @@ async def play_song(client: Client, message: Message):
         )
         await pytgcalls.join_group_call(
             chat_id,
-            InputStream(
-                InputAudioStream(
-                    process.stdout,
-                )
+            AudioPiped(
+                pipe_path,
             )
         )
         await message.reply_text(f"Playing **{audio.file_name}** in the voice chat", parse_mode=ParseMode.MARKDOWN)
