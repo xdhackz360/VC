@@ -2,11 +2,12 @@ import asyncio
 import os
 from pyrogram import Client, filters
 from pyrogram.enums import ParseMode
-from pyrogram.types import Message, ChatPrivileges
+from pyrogram.types import Message
 from pytgcalls import PyTgCalls, idle
 from pytgcalls.types import Update
 from pytgcalls.types.input_stream import InputStream, InputAudioStream
 from pytgcalls.exceptions import NoActiveGroupCall
+import subprocess
 
 # Replace these with your actual API details
 API_ID = 24602058  # Replace with your API ID
@@ -25,6 +26,9 @@ pytgcalls = PyTgCalls(user_client)
 async def on_stream_end(_, update: Update):
     chat_id = update.chat_id
     await pytgcalls.leave_group_call(chat_id)
+    # Remove the audio file after the voice chat ends
+    if os.path.exists(update.audio_file_path):
+        os.remove(update.audio_file_path)
 
 @app.on_message(filters.command("joinvc") & filters.group)
 async def join_vc(client: Client, message: Message):
@@ -43,12 +47,17 @@ async def play_song(client: Client, message: Message):
     audio = message.reply_to_message.audio
     file_path = await message.reply_to_message.download()
 
+    # Convert the audio file to .wav format using FFmpeg
+    wav_file_path = file_path.replace('.mp3', '.wav')
+    command = f'ffmpeg -i "{file_path}" -ac 2 -f wav "{wav_file_path}"'
+    subprocess.run(command, shell=True, check=True)
+
     try:
         await pytgcalls.join_group_call(
             chat_id,
             InputStream(
                 InputAudioStream(
-                    file_path,
+                    wav_file_path,
                 )
             )
         )
@@ -64,11 +73,14 @@ async def play_song(client: Client, message: Message):
             chat_id,
             InputStream(
                 InputAudioStream(
-                    file_path,
+                    wav_file_path,
                 )
             )
         )
         await message.reply_text(f"Playing **{audio.file_name}** in the voice chat", parse_mode=ParseMode.MARKDOWN)
+    
+    # Store the file path to remove it later
+    update.audio_file_path = wav_file_path
 
 @app.on_message(filters.command("leavevc") & filters.group)
 async def leave_vc(client: Client, message: Message):
