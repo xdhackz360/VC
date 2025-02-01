@@ -13,7 +13,7 @@ from pytgcalls.exceptions import NoActiveGroupCall
 # Replace these with your actual API details
 API_ID = 24602058  # Replace with your API ID
 API_HASH = "b976a44ccb8962b20113113f84aeebf6"  # Replace with your API Hash
-BOT_TOKEN = "7548127733:AAEIJBaAVeYn9DPf41CfL-zze8yt7zuDXQI"  # Replace with your Bot Token
+BOT_TOKEN = "7548127733:AAGBfpSBajzoy0VS1fLJD0OX1d3X037tC8k"  # Replace with your Bot Token
 SESSION_STRING = "BQF3ZcoAsX0yc18HrzrBGcI8rNpM02CXtzn5YPHRhTs725h-OjM3KPGwv_yckjVNlFy7M6jT9u2NbAu1z2eOZzRMTg2FVPoBZ7LmPrCksegO3yK1irJjWh0f8yk3LlU1uGqRLC0ZlrJSGIzuqiF9vj7S_K8AU25Pw5IXaTuubXwPET65a6HfGtxmi6gbAQ-ayjiVcavTamd_Wc_QWS17Am4fQoLF_8fwP59sWcTY5PrXVdLfmke5xLODmxVHqBpoVkpccnxWDOskJwZXYFwoysclMcZ2V9xRiKlUpfVmgxUmSRX1GbCzHSBXCUUgBpZILJw576l7KOByjXyly1y-gVRvvrciggAAAAHWFal6AA"
 
 # Configure logging
