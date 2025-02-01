@@ -2,10 +2,11 @@ import asyncio
 import os
 from pyrogram import Client, filters
 from pyrogram.enums import ParseMode
-from pyrogram.types import Message
+from pyrogram.types import Message, ChatPrivileges
 from pytgcalls import PyTgCalls, idle
 from pytgcalls.types import Update
 from pytgcalls.types.input_stream import InputStream, InputAudioStream
+from pytgcalls.exceptions import NoActiveGroupCall
 
 # Replace these with your actual API details
 API_ID = 24602058  # Replace with your API ID
@@ -42,16 +43,32 @@ async def play_song(client: Client, message: Message):
     audio = message.reply_to_message.audio
     file_path = await message.reply_to_message.download()
 
-    await pytgcalls.join_group_call(
-        chat_id,
-        InputStream(
-            InputAudioStream(
-                file_path,
+    try:
+        await pytgcalls.join_group_call(
+            chat_id,
+            InputStream(
+                InputAudioStream(
+                    file_path,
+                )
             )
         )
-    )
-
-    await message.reply_text(f"Playing **{audio.file_name}** in the voice chat", parse_mode=ParseMode.MARKDOWN)
+        await message.reply_text(f"Playing **{audio.file_name}** in the voice chat", parse_mode=ParseMode.MARKDOWN)
+    except NoActiveGroupCall:
+        await user_client.invoke(
+            functions.phone.CreateGroupCall(
+                peer=await user_client.resolve_peer(chat_id),
+                random_id=0
+            )
+        )
+        await pytgcalls.join_group_call(
+            chat_id,
+            InputStream(
+                InputAudioStream(
+                    file_path,
+                )
+            )
+        )
+        await message.reply_text(f"Playing **{audio.file_name}** in the voice chat", parse_mode=ParseMode.MARKDOWN)
 
 @app.on_message(filters.command("leavevc") & filters.group)
 async def leave_vc(client: Client, message: Message):
