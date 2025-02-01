@@ -21,13 +21,17 @@ user_client = Client("user", api_id=API_ID, api_hash=API_HASH, session_string=SE
 # Create PyTgCalls instance
 pytgcalls = PyTgCalls(user_client)
 
+# Dictionary to store file paths for each chat
+file_paths = {}
+
 @pytgcalls.on_stream_end()
 async def on_stream_end(_, update: Update):
     chat_id = update.chat_id
     await pytgcalls.leave_group_call(chat_id)
     # Remove the audio file after the voice chat ends
-    if hasattr(update, "audio_file_path") and os.path.exists(update.audio_file_path):
-        os.remove(update.audio_file_path)
+    if chat_id in file_paths and os.path.exists(file_paths[chat_id]):
+        os.remove(file_paths[chat_id])
+        del file_paths[chat_id]
 
 @app.on_message(filters.command("joinvc") & filters.group)
 async def join_vc(client: Client, message: Message):
@@ -74,13 +78,17 @@ async def play_song(client: Client, message: Message):
         await message.reply_text(f"Playing **{audio.file_name}** in the voice chat", parse_mode=ParseMode.MARKDOWN)
     
     # Store the file path to remove it later
-    update.audio_file_path = file_path
+    file_paths[chat_id] = file_path
 
 @app.on_message(filters.command("leavevc") & filters.group)
 async def leave_vc(client: Client, message: Message):
     chat_id = message.chat.id
     await pytgcalls.leave_group_call(chat_id)
     await message.reply_text("Left the voice chat", parse_mode=ParseMode.MARKDOWN)
+    # Remove the audio file after leaving the voice chat
+    if chat_id in file_paths and os.path.exists(file_paths[chat_id]):
+        os.remove(file_paths[chat_id])
+        del file_paths[chat_id]
 
 async def main():
     await app.start()
