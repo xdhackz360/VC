@@ -51,11 +51,19 @@ async def join_vc(client: Client, message: Message):
 async def play_song(client: Client, message: Message):
     chat_id = message.chat.id
 
-    if not message.reply_to_message or not message.reply_to_message.audio:
-        await message.reply_text("Please reply to a valid .mp3 file with the /play command.", parse_mode=ParseMode.MARKDOWN)
+    if not message.reply_to_message or not (message.reply_to_message.audio or message.reply_to_message.document):
+        await message.reply_text("Please reply to a valid .mp3 or .m4a file with the /play command.", parse_mode=ParseMode.MARKDOWN)
         return
 
-    audio = message.reply_to_message.audio
+    # Check if the file is an audio file (mp3 or m4a)
+    if message.reply_to_message.audio:
+        audio = message.reply_to_message.audio
+    elif message.reply_to_message.document and (message.reply_to_message.document.file_name.endswith('.mp3') or message.reply_to_message.document.file_name.endswith('.m4a')):
+        audio = message.reply_to_message.document
+    else:
+        await message.reply_text("Please reply to a valid .mp3 or .m4a file with the /play command.", parse_mode=ParseMode.MARKDOWN)
+        return
+
     file_path = await message.reply_to_message.download()
     logger.info(f"Downloaded audio file for chat {chat_id}: {file_path}")
 
