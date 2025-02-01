@@ -7,6 +7,7 @@ from pytgcalls import PyTgCalls, idle
 from pytgcalls.types import Update
 from pytgcalls.types.input_stream import InputStream, InputAudioStream
 from pytgcalls.exceptions import NoActiveGroupCall
+import subprocess
 import logging
 
 # Replace these with your actual API details
@@ -58,12 +59,25 @@ async def play_song(client: Client, message: Message):
     file_path = await message.reply_to_message.download()
     logger.info(f"Downloaded audio file for chat {chat_id}: {file_path}")
 
+    # Use FFmpeg to stream the audio file without modifying it
+    ffmpeg_command = [
+        'ffmpeg',
+        '-y',  # Overwrite output files without asking
+        '-re',  # Read input at native frame rate
+        '-i', file_path,  # Input file
+        '-f', 's16le',  # Output format
+        '-ac', '2',  # Number of audio channels
+        '-ar', '48000',  # Audio sample rate
+        '-'  # Output to stdout
+    ]
+
     try:
+        process = subprocess.Popen(ffmpeg_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         await pytgcalls.join_group_call(
             chat_id,
             InputStream(
                 InputAudioStream(
-                    file_path,
+                    process.stdout,
                 )
             )
         )
@@ -80,7 +94,7 @@ async def play_song(client: Client, message: Message):
             chat_id,
             InputStream(
                 InputAudioStream(
-                    file_path,
+                    process.stdout,
                 )
             )
         )
